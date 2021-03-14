@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:talawa/enums/connectivity_status.dart';
 import 'package:talawa/services/preferences.dart';
 import 'package:talawa/utils/GQLClient.dart';
 import 'package:talawa/views/pages/_pages.dart';
@@ -13,8 +12,6 @@ import 'package:talawa/views/pages/organization/profile_page.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/org_controller.dart';
-import 'locator.dart';
-import 'services/connectivity_status.dart';
 import 'views/pages/organization/create_organization.dart';
 import 'views/pages/organization/switch_org_page.dart';
 
@@ -24,8 +21,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   userID = await preferences.getUserId();
 
-  setupLocator();
-
   runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<GraphQLConfiguration>(
@@ -33,9 +28,6 @@ Future<void> main() async {
       ChangeNotifierProvider<OrgController>(create: (_) => OrgController()),
       ChangeNotifierProvider<AuthController>(create: (_) => AuthController()),
       ChangeNotifierProvider<Preferences>(create: (_) => Preferences()),
-      StreamProvider<ConnectivityStatus>(
-          create: (_) =>
-              ConnectivityService().connectionStatusController.stream),
     ],
     child: MyApp(),
   ));
@@ -46,29 +38,37 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: UIData.appName,
-      theme: ThemeData(
-          primaryColor: UIData.primaryColor,
-          fontFamily: UIData.quickFont,
-          primarySwatch: UIData.primaryColor),
-      debugShowCheckedModeBanner: false,
-      showPerformanceOverlay: false,
-      onGenerateRoute: (RouteSettings settings) {
-        print('build route for ${settings.name}');
-        var routes = <String, WidgetBuilder>{
-          UIData.homeRoute: (BuildContext context) => HomePage(),
-          UIData.loginPageRoute: (BuildContext context) => LoginPage(),
-          UIData.createOrgPage: (BuildContext context) => CreateOrganization(),
-          UIData.joinOrganizationPage: (BuildContext context) =>
-              JoinOrganization(),
-          UIData.switchOrgPage: (BuildContext context) => SwitchOrganization(),
-          UIData.profilePage: (BuildContext context) => ProfilePage(),
-        };
-        WidgetBuilder builder = routes[settings.name];
-        return MaterialPageRoute(builder: (ctx) => builder(ctx));
+    return  GestureDetector(
+      onTap:(){
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+          FocusManager.instance.primaryFocus.unfocus();
+        }
       },
-      home: userID == null ? LoginPage() : HomePage(),
+      child:MaterialApp(
+        title: UIData.appName,
+        theme: ThemeData(
+            primaryColor: UIData.primaryColor,
+            fontFamily: UIData.quickFont,
+            primarySwatch: UIData.primaryColor),
+        debugShowCheckedModeBanner: false,
+        showPerformanceOverlay: false,
+        onGenerateRoute: (RouteSettings settings) {
+          print('build route for ${settings.name}');
+          var routes = <String, WidgetBuilder>{
+            UIData.homeRoute: (BuildContext context) => HomePage(),
+            UIData.loginPageRoute: (BuildContext context) => LoginPage(),
+            UIData.createOrgPage: (BuildContext context) => CreateOrganization(),
+            UIData.joinOrganizationPage: (BuildContext context) =>
+                JoinOrganization(),
+            UIData.switchOrgPage: (BuildContext context) => SwitchOrganization(),
+            UIData.profilePage: (BuildContext context) => ProfilePage(),
+          };
+          WidgetBuilder builder = routes[settings.name];
+          return MaterialPageRoute(builder: (ctx) => builder(ctx));
+        },
+        home: userID == null ? LoginPage() : HomePage(),
+      ),
     );
   }
 }

@@ -22,6 +22,11 @@ class LoginForm extends StatefulWidget {
 }
 
 class LoginFormState extends State<LoginForm> {
+  final email = TextEditingController();
+  final newPassword = TextEditingController();
+  final repeatNewPassword = TextEditingController();
+  final password = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
   LoginViewModel model = new LoginViewModel();
   bool _progressBarState = false;
@@ -30,6 +35,7 @@ class LoginFormState extends State<LoginForm> {
   FToast fToast;
   Preferences _pref = Preferences();
   static String orgURI;
+  bool _obscureText = true;
 
   void toggleProgressBarState() {
     _progressBarState = !_progressBarState;
@@ -39,7 +45,8 @@ class LoginFormState extends State<LoginForm> {
   void initState() {
     super.initState();
     Provider.of<GraphQLConfiguration>(context, listen: false).getOrgUrl();
-    fToast = FToast(context);
+    fToast = FToast();
+    fToast.init(context);
   }
 
   //function for login user which gets called when sign in is press
@@ -97,50 +104,62 @@ class LoginFormState extends State<LoginForm> {
             SizedBox(
               height: 50,
             ),
-            TextFormField(
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) => Validator.validateEmail(value),
-              textAlign: TextAlign.left,
-              style: TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                    borderRadius: BorderRadius.circular(20.0)),
-                prefixIcon: Icon(Icons.email),
-                labelText: "Email",
-                labelStyle: TextStyle(color: Colors.white),
-                alignLabelWithHint: true,
-                hintText: 'foo@bar.com',
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-              onSaved: (value) {
-                model.email = value;
-              },
-            ),
-            SizedBox(
-              height: 20,
-            ),
-            TextFormField(
-              obscureText: true,
-              validator: (value) => Validator.validatePassword(value),
-              textAlign: TextAlign.left,
-              style: TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                    borderRadius: BorderRadius.circular(20.0)),
-                prefixIcon: Icon(Icons.lock),
-                labelText: "Password",
-                labelStyle: TextStyle(color: Colors.white),
-                focusColor: UIData.primaryColor,
-                alignLabelWithHint: true,
-                hintText: 'foo@bar.com',
-                hintStyle: TextStyle(color: Colors.grey),
-              ),
-              onSaved: (value) {
-                model.password = value;
-              },
-            ),
+            AutofillGroup(child: Column(
+              children: <Widget>[
+                TextFormField(
+                  autofillHints: <String>[AutofillHints.email],
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => Validator.validateEmail(value),
+                  textAlign: TextAlign.left,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(20.0)),
+                    prefixIcon: Icon(Icons.email),
+                    labelText: "Email",
+                    labelStyle: TextStyle(color: Colors.white),
+                    alignLabelWithHint: true,
+                    hintText: 'foo@bar.com',
+                    hintStyle: TextStyle(color: Colors.grey),
+                  ),
+                  onSaved: (value) {
+                    model.email = value;
+                  },
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                TextFormField(
+                  autofillHints: <String>[AutofillHints.password],
+                  obscureText: _obscureText,
+                  validator: (value) => Validator.validatePassword(value),
+                  textAlign: TextAlign.left,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(20.0)),
+                    prefixIcon: Icon(Icons.lock),
+                    suffixIcon: FlatButton(
+                      onPressed: _toggle,
+                      child: Icon(_obscureText
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                    ),
+                    labelText: "Password",
+                    labelStyle: TextStyle(color: Colors.white),
+                    focusColor: UIData.primaryColor,
+                    alignLabelWithHint: true,
+                    hintText: '**********',
+                    hintStyle: TextStyle(color: Colors.grey),
+                  ),
+                  onSaved: (value) {
+                    model.password = value;
+                  },
+                ),
+              ],
+            )),
             SizedBox(
               height: 20,
             ),
@@ -182,7 +201,7 @@ class LoginFormState extends State<LoginForm> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(msg),
+          Expanded(child:Text(msg)),
         ],
       ),
     );
@@ -204,7 +223,7 @@ class LoginFormState extends State<LoginForm> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(msg),
+          Expanded(child:Text(msg)),
         ],
       ),
     );
@@ -214,5 +233,12 @@ class LoginFormState extends State<LoginForm> {
       gravity: ToastGravity.BOTTOM,
       toastDuration: Duration(seconds: 5),
     );
+  }
+
+  //function toggles _obscureText value
+  void _toggle() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
   }
 }
